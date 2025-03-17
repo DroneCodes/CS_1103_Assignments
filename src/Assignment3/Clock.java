@@ -1,22 +1,50 @@
 package Assignment3;
 
+
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * The Clock class provides functionality to display the current time
+ * and update it in the background using separate threads for updating
+ * and displaying the time.
+ */
 public class Clock {
+    /**
+     * A flag to control the running state of the clock.
+     * It is marked as volatile to ensure visibility across threads.
+     */
     private volatile boolean running = true;
-    private LocalDateTime currentTime;
+
+    /**
+     * Holds the current time.
+     */
+    private LocalDateTime currentTime1, currentTime2, currentTime3;
+
+    /**
+     * Formatter to format the current time for display.
+     * The pattern used is "HH:mm:ss dd-MM-yyyy".
+     */
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy");
 
     /**
-     * Updates the current time in a background thread
+     * The TimeUpdater class is a Runnable that updates the current time
+     * in a background thread at regular intervals.
      */
     private class TimeUpdater implements Runnable {
+        /**
+         * The run method contains the logic to update the current time
+         * every 100 milliseconds.
+         */
         @Override
         public void run() {
             try {
                 while (running) {
-                    currentTime = LocalDateTime.now();
+                    currentTime1 = LocalDateTime.now();
+                    currentTime2 = LocalDateTime.now(ZoneId.of("Europe/London"));
+                    currentTime3 = LocalDateTime.now(ZoneId.of("Africa/Lagos"));
                     Thread.sleep(100); // Update every 100ms for precision
                 }
             } catch (InterruptedException e) {
@@ -27,16 +55,23 @@ public class Clock {
     }
 
     /**
-     * Displays the current time in a separate thread
+     * The TimeDisplay class is a Runnable that displays the current time
+     * in a separate thread at regular intervals.
      */
     private class TimeDisplay implements Runnable {
+        /**
+         * The run method contains the logic to display the current time
+         * every second.
+         */
         @Override
         public void run() {
             try {
                 while (running) {
-                    if (currentTime != null) {
-                        String formattedTime = currentTime.format(formatter);
-                        System.out.print("\r" + formattedTime); // \r for carriage return to update in place
+                    if (currentTime1 != null || currentTime2 != null || currentTime3 != null) {
+                        String formattedTime1 = currentTime1.format(formatter);
+                        String formattedTime2 = currentTime2.format(formatter);
+                        String formattedTime3 = currentTime3.format(formatter);
+                        System.out.print("\rNew York:" + formattedTime1 + " London:" + formattedTime2 + " Lagos:" + formattedTime3);
                     }
                     Thread.sleep(1000); // Display update every second
                 }
@@ -48,7 +83,9 @@ public class Clock {
     }
 
     /**
-     * Starts the clock with appropriate thread priorities
+     * Starts the clock by creating and starting the time updater and display threads.
+     * The time updater thread is given normal priority, while the display thread
+     * is given maximum priority.
      */
     public void start() {
         // Create and configure the time updater thread (background)
@@ -65,19 +102,23 @@ public class Clock {
     }
 
     /**
-     * Stops the clock gracefully
+     * Stops the clock gracefully by setting the running flag to false.
      */
     public void stop() {
         running = false;
     }
 
+    /**
+     * The main method to start the clock and run it for 30 seconds.
+     * @param args Command line arguments
+     */
     public static void main(String[] args) {
         Clock clock = new Clock();
         clock.start();
 
         // Run for 30 seconds then stop
         try {
-            Thread.sleep(30000);
+            Thread.sleep(60000);
             clock.stop();
         } catch (InterruptedException e) {
             System.err.println("Main thread interrupted: " + e.getMessage());
